@@ -1,9 +1,8 @@
 package com.NerdBot.JDA;
 
-import com.NerdBot.JDA.commands.commandManager;
+import com.NerdBot.JDA.commands.dinfo;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.sharding.DefaultShardManager;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 
@@ -23,7 +22,7 @@ public class NerdBot {
             System.out.println("ERROR: Token is invalid\n");
         }
 
-        shardManager.addEventListener(new commandManager());
+        shardManager.addEventListener(new dinfo());
 
 
     }
