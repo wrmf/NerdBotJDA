@@ -1,6 +1,6 @@
 package com.NerdBot.JDA.commands;
-
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -15,17 +15,18 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.requests.restaction.AuditableRestAction;
+import net.dv8tion.jda.internal.utils.PermissionUtil;
 import org.jetbrains.annotations.NotNull;
-
 import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class dinfo extends ListenerAdapter {
 
     private final String ownerID = "555207100603826177";
+    private final String testServerID = "714224578376892427";
 
     private EmbedBuilder setEmbedPresets(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder();
@@ -46,6 +47,10 @@ public class dinfo extends ListenerAdapter {
         return embed;
 
     }
+
+    /* ****
+    *Dinfo*
+     *****/
 
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
@@ -93,12 +98,12 @@ public class dinfo extends ListenerAdapter {
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         } else if(command.equalsIgnoreCase("getguilds")) {
             event.deferReply().queue();
-            if(String.valueOf(Objects.requireNonNull(event.getMember()).getIdLong()).equals(ownerID)) {
+            if(String.valueOf(Objects.requireNonNull(event.getMember()).getIdLong()).equals(ownerID) && String.valueOf(Objects.requireNonNull(event.getGuild()).getIdLong()).equals("714224578376892427")) {
                 EmbedBuilder embed = setEmbedPresets(event);
 
                 List<String> list = new ArrayList<>();
                 for (Guild guild : event.getJDA().getGuilds())
-                    embed.addField("", guild.getName(), false);
+                    embed.addField("", guild.getName()+": "+guild.getOwner(), false);
                 embed.setTitle("Guilds: "+event.getJDA().getGuilds().size());
                 event.getHook().sendMessageEmbeds(embed.build()).queue();
             } else {
@@ -238,11 +243,180 @@ public class dinfo extends ListenerAdapter {
             }
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
+
+        /* ********
+         Moderation*
+         **********/
+
+        else if(command.equalsIgnoreCase("nick")) {
+            event.deferReply().queue();
+            if(Objects.requireNonNull(event.getMember()).hasPermission(Permission.BAN_MEMBERS) || event.getMember().isOwner() || Objects.equals(String.valueOf(event.getMember().getIdLong()), ownerID)) {
+                EmbedBuilder embed = setEmbedPresets(event);
+
+                try {
+                    OptionMapping messageUser = event.getOption("user");
+                    OptionMapping messageNick = event.getOption("nick");
+
+                    Member m;
+                    String s;
+
+                    if(messageUser == null) {
+                        m = event.getMember();
+                    } else {
+                        m = messageUser.getAsMember();
+                    } if(messageNick == null) {
+                        System.out.println(messageNick.getAsString());
+                        embed.setColor(Color.red);
+                        embed.setTitle("ERROR");
+                        embed.setDescription("An unknown error occurred");
+                    } else {
+                        assert messageUser != null;
+                        String newNick = messageNick.getAsString();
+
+                        if(newNick.length() >= 32) {
+                            embed.setColor(Color.red);
+                            embed.setTitle("ERROR");
+                            embed.setDescription("Nicknames must be < 32 characters");
+                        } else {
+                            if(PermissionUtil.canInteract(Objects.requireNonNull(event.getGuild()).getSelfMember(), m) && PermissionUtil.canInteract(event.getMember(), m)) {
+                                m.modifyNickname(newNick).reason("Requested by "+event.getMember().getEffectiveName()).queue();
+                                embed.setTitle("Success");
+                                embed.setDescription("Changed "+m.getAsMention()+"'s nickname");
+                                embed.setColor(Color.green);
+                            } else {
+                                embed.setColor(Color.red);
+                                embed.setTitle("ERROR");
+                                embed.setTitle("I do not have permission to modify that user");
+                            }
+                        }
+
+                    }
+                } catch(NullPointerException e) {
+                    embed.setColor(Color.red);
+                    embed.setTitle("ERROR");
+                    embed.setDescription("An unknown error occurred");
+                }
+
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("You do not have permission to use this command");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        } else if(command.equalsIgnoreCase("ban")) {
+            event.deferReply().queue();
+
+            if(!Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("**I** are not authorized to ban members :(");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+                return;
+            }
+
+            if (Objects.requireNonNull(event.getMember()).hasPermission(Permission.BAN_MEMBERS) || event.getMember().isOwner() || Objects.equals(String.valueOf(event.getMember().getIdLong()), ownerID)) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                OptionMapping banUser = event.getOption("user");
+                OptionMapping reasonString = event.getOption("reason");
+                String reason;
+
+                if(reasonString == null) {
+                    reason = "Banned via ban command by "+event.getUser().getName()+"#"+event.getUser().getDiscriminator();
+                } else {
+                     reason = reasonString.getAsString();
+                }
+
+                if(banUser == null) {
+                    embed.setColor(Color.red);
+                    embed.setTitle("ERROR");
+                    embed.setDescription("No user to ban was provided");
+                } else if(banUser != null) {
+                    User u = banUser.getAsUser();
+                    Member m = banUser.getAsMember();
+                    if(m != null) {
+                        if (PermissionUtil.canInteract(Objects.requireNonNull(event.getGuild()).getSelfMember(), m) && PermissionUtil.canInteract(event.getMember(), m) && !String.valueOf(m.getIdLong()).equalsIgnoreCase(ownerID)) {
+                            Objects.requireNonNull(event.getGuild()).ban(u, 0, reason).queue();
+                            embed.setDescription(u.getAsMention() + " has been banned from " + event.getGuild().getName());
+                        } else {
+                            embed.setColor(Color.red);
+                            embed.setTitle("ERROR");
+                            embed.setDescription("I do not have permission to ban that user");
+                        }
+                    } else {
+                        Objects.requireNonNull(event.getGuild()).ban(u, 0, reason).queue();
+                        embed.setDescription(u.getAsMention() + " has been banned from " + event.getGuild().getName());
+                    }
+                } else {
+                    embed.setColor(Color.red);
+                    embed.setTitle("ERROR");
+                    embed.setDescription("An unknown error occurred");
+                }
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("You do not have permission to use this command");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        } else if(command.equalsIgnoreCase("unban")) {
+            event.deferReply().queue();
+
+            if(!Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.BAN_MEMBERS)) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("**I** are not authorized to unban members :(");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+                return;
+            }
+
+            if (Objects.requireNonNull(event.getMember()).hasPermission(Permission.BAN_MEMBERS) || event.getMember().isOwner() || Objects.equals(String.valueOf(event.getMember().getIdLong()), ownerID)) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                OptionMapping unbanUser = event.getOption("user");
+
+                if(unbanUser != null) {
+                    User u = unbanUser.getAsUser();
+                    event.getGuild().unban(u).queue();
+                    embed.setDescription(u.getAsMention()+"was unbanned from "+event.getGuild().getName());
+
+                } else {
+                    embed.setColor(Color.red);
+                    embed.setTitle("ERROR");
+                    embed.setDescription("An unknown error occurred");
+                }
+
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("You are not authorized to unban members");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        }
+
+        /* *****
+        *Invite*
+         ******/
+
+        else if(command.equalsIgnoreCase("invite")) {
+            event.deferReply().setEphemeral(true).queue();
+            EmbedBuilder embed = setEmbedPresets(event);
+            embed.setDescription("My invite link is: https://tinyurl.com/yyoja52j");
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
+        }
     }
 
     @Override
     public void onGuildReady(@NotNull GuildReadyEvent event) {
         List<CommandData> commands = new ArrayList<>();
+        if(String.valueOf(event.getGuild().getIdLong()).equals(testServerID)) {
+            commands.add(Commands.slash("getguilds", "Get the list of guilds this bot is in"));
+        }
         event.getGuild().updateCommands().addCommands(commands).queue();
     }
 
@@ -255,19 +429,31 @@ public class dinfo extends ListenerAdapter {
     @Override
     public void onReady(@NotNull ReadyEvent event) {
         List<CommandData> commands = new ArrayList<>();
+
+        //DINFO
         commands.add(Commands.slash("ping", "Test command"));
         commands.add(Commands.slash("roles", "Get roles in current server"));
         commands.add(Commands.slash("owner", "Get the owner of the current server"));
-        commands.add(Commands.slash("getguilds", "Get the list of guilds this bot is in"));
-
         OptionData user = new OptionData(OptionType.USER, "user", "The user you want to get the profile picture of; if none is provided, defaults to message author", false);
         commands.add(Commands.slash("pfp", "Get the profile picture of a user").addOptions(user));
         commands.add(Commands.slash("user", "Get server-specific information about a user").addOptions(user));
-
         OptionData role = new OptionData(OptionType.ROLE, "role", "the role you want to get information about", true);
         commands.add(Commands.slash("role", "Get information about a role").addOptions(role));
         commands.add(Commands.slash("server", "Get information about current server"));
         commands.add(Commands.slash("emojis", "Get emojis in current server"));
+
+        //MODERATION
+        OptionData user2 = new OptionData(OptionType.USER, "user", "The user you want to set the nickname of; changes author's nick if blank", false);
+        OptionData nick = new OptionData(OptionType.STRING, "nick", "the new nick", true);
+        commands.add(Commands.slash("nick", "Change the nickname of a user").addOptions(nick, user2));
+        OptionData banUser = new OptionData(OptionType.USER, "user", "User to ban", true);
+        OptionData banReason = new OptionData(OptionType.STRING, "reason", "reason user was banned", false);
+        commands.add(Commands.slash("ban", "Ban a user").addOptions(banUser, banReason));
+        OptionData unbanUser = new OptionData(OptionType.USER, "user", "User to unban", true);
+        commands.add(Commands.slash("unban", "Unban a user").addOptions(unbanUser));
+
+        //INVITE
+        commands.add(Commands.slash("invite", "Get the bot's invite link"));
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
 }
