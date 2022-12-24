@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="william@ec2-34-213-55-68.us-west-2.compute.amazonaws.com:22" type="ssh/sftp">
+        <config>
+          <option name="projectRootOnTarget" value="/home/william/NerdBotJDA" />
+          <option name="serverName" value="william@ec2-34-213-55-68.us-west-2.compute.amazonaws.com:22 password" />
+          <option name="useRsync" value="true" />
+        </config>
+        <ContributedStateBase type="JavaLanguageRuntime">
+          <config>
+            <option name="javaVersionString" value="17.0.5" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>
