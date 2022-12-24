@@ -1,14 +1,12 @@
 package com.NerdBot.JDA.commands;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -22,11 +20,67 @@ import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Random;
 
 public class dinfo extends ListenerAdapter {
 
+    // PEOPLE
     private final String ownerID = "555207100603826177";
+    private final String echoVial = "609355069212852244";
+    private final String lockdown = "703964837578932234";
+
+    //SERVERS
     private final String testServerID = "714224578376892427";
+    private final String NAYLE_staff_2021 = "860183556599709737";
+    private final String ldl_server = "707226419993772112";
+
+    //CHANNELS
+   //private final String[] beeChannels = beeChannels =  ["710542883375022160", "829711652382441503", "901267588041044059"];
+
+    @Override
+    public void onMessageReceived(@NotNull MessageReceivedEvent event) {
+
+        Message message = event.getMessage();
+
+        /* *******
+        *Pings*
+        *********/
+
+        Mentions m = message.getMentions();
+        UserSnowflake u = User.fromId(ownerID);
+
+        if(m.isMentioned(u) && !String.valueOf(message.getGuild().getIdLong()).equalsIgnoreCase(NAYLE_staff_2021)) {
+                event.getMessage().addReaction("pingsock:1056019618147340350").queue();
+        } else if(m.isMentioned(User.fromId(lockdown))) {
+            // Check LDL staff & ping
+            // for(UserSnowflake user : User.fromId(echoVial)) {
+        }
+
+
+        /* ****************
+        *Mention responses*
+         *****************/
+
+        else if(message.getContentRaw().equalsIgnoreCase("nayle") && String.valueOf(event.getGuild().getIdLong()).equalsIgnoreCase(NAYLE_staff_2021)) {
+            event.getChannel().sendMessage("NAYLE? I LOVE NAYLE!").queue();
+        } else if(message.getContentRaw().equalsIgnoreCase("outpost") && String.valueOf(event.getGuild().getIdLong()).equalsIgnoreCase(NAYLE_staff_2021)) {
+            event.getChannel().sendMessage("ARE WE THERE YET?").queue();
+        } else if(message.getContentRaw().equalsIgnoreCase("gps") && String.valueOf(event.getGuild().getIdLong()).equalsIgnoreCase(NAYLE_staff_2021)) {
+            event.getChannel().sendMessage("WHERE ARE WE?").queue();
+        } else if(message.getContentRaw().equalsIgnoreCase("good bot")) {
+            event.getChannel().sendMessage("beep boop").queue();
+        } else if(message.getContentRaw().equalsIgnoreCase("bee")) { //inBeeChannels
+            event.getChannel().sendMessage("https://cdn.discordapp.com/attachments/710544037198823454/932073503224627300/IMG_3040.webp!").queue();
+        } else if(message.getContentRaw().equalsIgnoreCase("uwu") && String.valueOf(event.getGuild().getIdLong()).equalsIgnoreCase(ldl_server)) {
+            event.getChannel().sendMessage("Stop it, get some help").queue();
+        } else if(String.valueOf(event.getAuthor().getId()).equalsIgnoreCase(echoVial)) {
+            Random random = new Random();
+            if(random.nextInt(20) == 0) {
+                event.getChannel().sendMessage(event.getMessage().getContentRaw()).queue();
+            }
+
+        }
+    }
 
     private EmbedBuilder setEmbedPresets(SlashCommandInteractionEvent event) {
         EmbedBuilder embed = new EmbedBuilder();
@@ -409,6 +463,70 @@ public class dinfo extends ListenerAdapter {
             embed.setDescription("My invite link is: https://tinyurl.com/yyoja52j");
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
+
+        /* ********
+         *Giveaway*
+         *********/
+
+        else if(command.equalsIgnoreCase("giveaway")) {
+            event.deferReply().queue();
+            OptionMapping giveawayItem = event.getOption("item");
+            OptionMapping numWinners = event.getOption("num winners");
+            int numberWinners;
+            if(numWinners == null) {
+                numberWinners = 1;
+            } else {
+                numberWinners = numWinners.getAsInt();
+            }
+            assert giveawayItem != null;
+                String item = giveawayItem.getAsString();
+
+            EmbedBuilder embed = setEmbedPresets(event);
+            embed.setTitle("Giveaway!");
+            embed.setDescription("\n\n Number of winners: **"+numberWinners+"** \n\n Hosted by "+ Objects.requireNonNull(event.getMember()).getAsMention());
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
+
+            // Get message ID
+
+            int giveawayID = 0;
+
+            embed.setDescription("Giveaway ID: "+giveawayID);
+            event.getHook().editOriginalEmbeds(embed.build()).queue();
+        }
+
+        /* ****
+         *Nuke*
+         *****/
+
+        else if(command.equalsIgnoreCase("nuke")) {
+            event.deferReply().setEphemeral(true).queue();
+            EmbedBuilder embed = setEmbedPresets(event);
+            OptionMapping nukeNum = event.getOption("num");
+            assert nukeNum != null;
+                int numNuke = Math.abs(nukeNum.getAsInt());
+
+            if(!Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.MESSAGE_MANAGE)) {
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("I do not have permission to delete messages");
+            } else if(Objects.requireNonNull(event.getMember()).hasPermission(Permission.MESSAGE_MANAGE) || String.valueOf(event.getMember().getIdLong()).equalsIgnoreCase(ownerID)) {
+                System.out.println(Objects.requireNonNull(event.getMember()).hasPermission(Permission.MESSAGE_MANAGE));
+                System.out.println(String.valueOf(event.getMember().getIdLong()).equalsIgnoreCase(ownerID));
+                event.getChannel().getIterableHistory()
+                        .takeAsync(numNuke)
+                        .thenAccept(event.getChannel()::purgeMessages);
+                embed.setColor(Color.green);
+                embed.setTitle("Success");
+                embed.setDescription(numNuke+" messages have been nuked");
+            } else {
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("You do not have permission to delete messages");
+            }
+
+            event.getHook().sendMessageEmbeds(embed.build()).queue();
+        }
+
     }
 
     @Override
@@ -417,6 +535,11 @@ public class dinfo extends ListenerAdapter {
         if(String.valueOf(event.getGuild().getIdLong()).equals(testServerID)) {
             commands.add(Commands.slash("getguilds", "Get the list of guilds this bot is in"));
         }
+
+        OptionData nukeNum = new OptionData(OptionType.INTEGER, "num", "number of messages to nuke", true);
+        commands.add(Commands.slash("nuke", "Nuke num number of messages").addOptions(nukeNum));
+
+
         event.getGuild().updateCommands().addCommands(commands).queue();
     }
 
@@ -454,6 +577,15 @@ public class dinfo extends ListenerAdapter {
 
         //INVITE
         commands.add(Commands.slash("invite", "Get the bot's invite link"));
+
+        //GIVEAWAY
+        OptionData giveawayItem = new OptionData(OptionType.STRING, "item", "item to give away", true);
+        OptionData numWinners = new OptionData(OptionType.INTEGER, "num winners", "number of winners", false);
+        commands.add(Commands.slash("giveaway", "Create a giveaway").addOptions(giveawayItem, numWinners));
+
+        //NUKE
+
+
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
 }
