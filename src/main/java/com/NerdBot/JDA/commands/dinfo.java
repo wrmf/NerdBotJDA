@@ -471,7 +471,7 @@ public class dinfo extends ListenerAdapter {
         else if(command.equalsIgnoreCase("giveaway")) {
             event.deferReply().queue();
             OptionMapping giveawayItem = event.getOption("item");
-            OptionMapping numWinners = event.getOption("num winners");
+            OptionMapping numWinners = event.getOption("numwinners");
             int numberWinners;
             if(numWinners == null) {
                 numberWinners = 1;
@@ -481,9 +481,10 @@ public class dinfo extends ListenerAdapter {
             assert giveawayItem != null;
                 String item = giveawayItem.getAsString();
 
-            EmbedBuilder embed = setEmbedPresets(event);
+            EmbedBuilder embed = new EmbedBuilder();
+            embed.setColor(Color.green);
             embed.setTitle("Giveaway!");
-            embed.setDescription("\n\n Number of winners: **"+numberWinners+"** \n\n Hosted by "+ Objects.requireNonNull(event.getMember()).getAsMention());
+            embed.setDescription(""+item+"\n\n Number of winners: **"+numberWinners+"** \n\n Hosted by "+ Objects.requireNonNull(event.getMember()).getAsMention());
             event.getHook().sendMessageEmbeds(embed.build()).queue();
 
             // Get message ID
@@ -580,7 +581,7 @@ public class dinfo extends ListenerAdapter {
 
         //GIVEAWAY
         OptionData giveawayItem = new OptionData(OptionType.STRING, "item", "item to give away", true);
-        OptionData numWinners = new OptionData(OptionType.INTEGER, "num winners", "number of winners", false);
+        OptionData numWinners = new OptionData(OptionType.INTEGER, "numwinners", "number of winners", false);
         commands.add(Commands.slash("giveaway", "Create a giveaway").addOptions(giveawayItem, numWinners));
 
         //NUKE
