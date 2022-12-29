@@ -15,7 +15,7 @@ public class NerdBot {
     public NerdBot() {
         DefaultShardManagerBuilder builder = DefaultShardManagerBuilder.createDefault(TokenFile.token);
         builder.setStatus(OnlineStatus.ONLINE);
-        builder.setActivity(Activity.playing("Successfully scammed discord for a badge"));
+        builder.setActivity(Activity.playing("Intellij because I'm migrating to JDA"));
         try {
             shardManager = builder.build();
         } catch(LoginException e) {
@@ -23,10 +23,6 @@ public class NerdBot {
         }
 
         shardManager.addEventListener(new dinfo());
-
-
-
-
 
     }
 

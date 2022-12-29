@@ -33,18 +33,21 @@ public class dinfo extends ListenerAdapter {
     private final String testServerID = "714224578376892427";
     private final String NAYLE_staff_2021 = "860183556599709737";
     private final String ldl_server = "707226419993772112";
+    private final String support_server = "1054081712243621948";
 
     //CHANNELS
    //private final String[] beeChannels = beeChannels =  ["710542883375022160", "829711652382441503", "901267588041044059"];
+    private final String dm_logs = "1057761462434668574";
+    private final String command_logs = "1057849647885996083";
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
 
-        Message message = event.getMessage();
-
         /* *******
         *Pings*
         *********/
+
+        Message message = event.getMessage();
 
         Mentions m = message.getMentions();
         UserSnowflake u = User.fromId(ownerID);
@@ -87,12 +90,12 @@ public class dinfo extends ListenerAdapter {
 
         try {
             if(Objects.requireNonNull(event.getMember()).getColor() == null) {
-                embed.setColor(Color.decode("4284ff"));
+                embed.setColor(Color.decode("0x4284ff"));
             } else {
                 embed.setColor(event.getMember().getColor());
             }
         } catch(NullPointerException e) {
-            embed.setColor(Color.decode("4284ff"));
+            embed.setColor(Color.decode("0x4284ff"));
         }
 
         User m = event.getUser();
@@ -109,6 +112,12 @@ public class dinfo extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         String command = event.getName();
+
+        EmbedBuilder logEmbed = setEmbedPresets(event);
+        logEmbed.setTitle("Command used");
+        logEmbed.setDescription("Command **"+command+"** used in **"+ Objects.requireNonNull(event.getGuild()).getName()+"** by "+ Objects.requireNonNull(event.getMember()).getAsMention());
+        Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(event.getGuild()).getJDA().getGuildById(support_server)).getTextChannelById(command_logs)).sendMessageEmbeds(logEmbed.build()).queue();
+
         if(command.equalsIgnoreCase("ping")) {
             event.deferReply().queue();
             EmbedBuilder embed = setEmbedPresets(event);
@@ -528,6 +537,99 @@ public class dinfo extends ListenerAdapter {
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
 
+        /* ****
+         *Text*
+         *****/
+
+        else if(command.equalsIgnoreCase("echo")) {
+            event.deferReply().setEphemeral(true).queue();
+            OptionMapping messageText = event.getOption("string");
+            assert messageText != null;
+                String text = messageText.getAsString();
+            if((Objects.requireNonNull(event.getMember()).hasPermission(Permission.MESSAGE_MANAGE) && Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.MESSAGE_MANAGE)) || (String.valueOf(event.getMember().getId()).equalsIgnoreCase(ownerID) && Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.MESSAGE_MANAGE))) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("Success");
+                embed.setDescription("Echo was successful!");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+                event.getChannel().sendMessage(text).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("Either you or the bot does not have permissions to use echo");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+
+        } else if(command.equalsIgnoreCase("dm")) {
+            event.deferReply().setEphemeral(true).queue();
+            OptionMapping messageText = event.getOption("string");
+            OptionMapping messageUser = event.getOption("user");
+            assert messageUser != null;
+                User user = messageUser.getAsUser();
+            assert messageText != null;
+                String text = messageText.getAsString();
+
+            if((Objects.requireNonNull(event.getMember()).hasPermission(Permission.MESSAGE_MANAGE) && Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.MESSAGE_MANAGE)) || (String.valueOf(event.getMember().getId()).equalsIgnoreCase(ownerID) && Objects.requireNonNull(event.getGuild()).getSelfMember().hasPermission(Permission.MESSAGE_MANAGE))) {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("Success");
+                embed.setDescription("DM was successful!");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+                user.openPrivateChannel().flatMap(channel -> channel.sendMessage(text)).queue();
+                EmbedBuilder embed2 = setEmbedPresets(event);
+                embed2.setTitle("DM");
+                embed2.setDescription(""+event.getUser().getAsMention()+" sent a DM to "+user.getAsMention()+":\n\n **"+text+"**");
+                Objects.requireNonNull(Objects.requireNonNull(event.getGuild().getJDA().getGuildById(support_server)).getTextChannelById(dm_logs)).sendMessageEmbeds(embed2.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setColor(Color.red);
+                embed.setTitle("ERROR");
+                embed.setDescription("Either you or the bot does not have permissions to use DM");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+
+        }
+
+        /* *****
+        *Stream*
+        *******/
+
+        else if(command.equalsIgnoreCase("startstream")) {
+            event.deferReply().setEphemeral(true).queue();
+            if(event.getUser().getId().equalsIgnoreCase(ownerID)) {
+                OptionMapping gameName = event.getOption("name");
+                assert gameName != null;
+                    String name = gameName.getAsString();
+                event.getJDA().getPresence().setActivity(Activity.streaming(name, "https://twitch.tv/EmerqldEnderman"));
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("Success");
+                embed.setDescription("Status was updated");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("ERROR");
+                embed.setColor(Color.red);
+                embed.setDescription("You do not have permission to use this command");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        } else if(command.equalsIgnoreCase("stopstream")) {
+            event.deferReply().setEphemeral(true).queue();
+            if(event.getUser().getId().equalsIgnoreCase(ownerID)) {
+                OptionMapping messageText = event.getOption("string");
+                assert messageText != null;
+                String string = messageText.getAsString();
+                event.getJDA().getPresence().setActivity(Activity.playing(string));
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("Success");
+                embed.setDescription("Status was updated");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            } else {
+                EmbedBuilder embed = setEmbedPresets(event);
+                embed.setTitle("ERROR");
+                embed.setColor(Color.red);
+                embed.setDescription("You do not have permission to use this command");
+                event.getHook().sendMessageEmbeds(embed.build()).queue();
+            }
+        }
     }
 
     @Override
@@ -536,10 +638,6 @@ public class dinfo extends ListenerAdapter {
         if(String.valueOf(event.getGuild().getIdLong()).equals(testServerID)) {
             commands.add(Commands.slash("getguilds", "Get the list of guilds this bot is in"));
         }
-
-        OptionData nukeNum = new OptionData(OptionType.INTEGER, "num", "number of messages to nuke", true);
-        commands.add(Commands.slash("nuke", "Nuke num number of messages").addOptions(nukeNum));
-
 
         event.getGuild().updateCommands().addCommands(commands).queue();
     }
@@ -585,7 +683,22 @@ public class dinfo extends ListenerAdapter {
         commands.add(Commands.slash("giveaway", "Create a giveaway").addOptions(giveawayItem, numWinners));
 
         //NUKE
+        OptionData nukeNum = new OptionData(OptionType.INTEGER, "num", "number of messages to nuke", true);
+        commands.add(Commands.slash("nuke", "Nuke num number of messages").addOptions(nukeNum));
 
+
+        //TEXT
+        OptionData messageText = new OptionData(OptionType.STRING, "string", "message to echo", true);
+        commands.add(Commands.slash("echo", "Echo a message").addOptions(messageText));
+        OptionData messageUser = new OptionData(OptionType.USER, "user", "user to message", true);
+        commands.add(Commands.slash("dm", "DM a user a message").addOptions(messageUser, messageText));
+
+        //STREAM
+
+        OptionData newStatus = new OptionData(OptionType.STRING, "string", "new status", true);
+        OptionData streamGame = new OptionData(OptionType.STRING, "name", "name of game", true);
+        commands.add(Commands.slash("startstream", "Change status to streaming").addOptions(streamGame));
+        commands.add(Commands.slash("stopstream", "Change status from streaming").addOptions(newStatus));
 
         event.getJDA().updateCommands().addCommands(commands).queue();
     }
