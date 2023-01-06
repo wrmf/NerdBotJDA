@@ -472,38 +472,7 @@ public class dinfo extends ListenerAdapter {
             embed.setDescription("My invite link is: https://tinyurl.com/yyoja52j");
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
-
-        /* ********
-         *Giveaway*
-         *********/
-
-        else if(command.equalsIgnoreCase("giveaway")) {
-            event.deferReply().queue();
-            OptionMapping giveawayItem = event.getOption("item");
-            OptionMapping numWinners = event.getOption("numwinners");
-            int numberWinners;
-            if(numWinners == null) {
-                numberWinners = 1;
-            } else {
-                numberWinners = numWinners.getAsInt();
-            }
-            assert giveawayItem != null;
-                String item = giveawayItem.getAsString();
-
-            EmbedBuilder embed = new EmbedBuilder();
-            embed.setColor(Color.green);
-            embed.setTitle("Giveaway!");
-            embed.setDescription(""+item+"\n\n Number of winners: **"+numberWinners+"** \n\n Hosted by "+ Objects.requireNonNull(event.getMember()).getAsMention());
-            event.getHook().sendMessageEmbeds(embed.build()).queue();
-
-            // Get message ID
-
-            int giveawayID = 0;
-
-            embed.setDescription("Giveaway ID: "+giveawayID);
-            event.getHook().editOriginalEmbeds(embed.build()).queue();
-        }
-
+        
         /* ****
          *Nuke*
          *****/
@@ -676,11 +645,6 @@ public class dinfo extends ListenerAdapter {
 
         //INVITE
         commands.add(Commands.slash("invite", "Get the bot's invite link"));
-
-        //GIVEAWAY
-        OptionData giveawayItem = new OptionData(OptionType.STRING, "item", "item to give away", true);
-        OptionData numWinners = new OptionData(OptionType.INTEGER, "numwinners", "number of winners", false);
-        commands.add(Commands.slash("giveaway", "Create a giveaway").addOptions(giveawayItem, numWinners));
 
         //NUKE
         OptionData nukeNum = new OptionData(OptionType.INTEGER, "num", "number of messages to nuke", true);
