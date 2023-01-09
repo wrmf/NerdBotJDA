@@ -472,7 +472,7 @@ public class dinfo extends ListenerAdapter {
             embed.setDescription("My invite link is: https://tinyurl.com/yyoja52j");
             event.getHook().sendMessageEmbeds(embed.build()).queue();
         }
-        
+
         /* ****
          *Nuke*
          *****/
